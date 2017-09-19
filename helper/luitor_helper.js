@@ -94,7 +94,7 @@ exports.db = function(type,dbName,callback) {
 				host: 'a2ss35.a2hosting.com', // Server hosting the postgres database 
 				user: 'iloredco', //env var: PGUSER 
 				password: 'supermario123', //env var: PGPASSWORD 
-				database: 'iloredco_sventas_luis', //env var: PGDATABASE 
+				database: 'iloredco_sventas_arnaldom', //env var: PGDATABASE 
 				port: 5432, //env var: PGPORT 
 				max: 50, // max number of clients in the pool 
 				idleTimeoutMillis: 30000, // how long a client is allowed to remain idle before being closed 
