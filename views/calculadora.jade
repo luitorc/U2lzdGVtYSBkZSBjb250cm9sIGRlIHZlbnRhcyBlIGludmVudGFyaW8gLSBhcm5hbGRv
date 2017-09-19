@@ -1,0 +1,60 @@
+doctype html
+html
+	head(lang='en')
+		meta(charset='UTF-8')
+		title Calculadora
+		script(src='/socket.io/socket.io.js')
+		script(src='js/jquery-1.9.1.js')
+		script(src="js/calculadora.js")
+		script(src='js/ini.js')
+		link(rel="stylesheet", href="css/calculadora.css")
+	body
+		i Bienvenidos compañeros becarios, aqui podran realizar sus consultas
+			| de una suma
+			
+		table(border="1",align="center", id="tbCalculadora")
+			tr
+				td(colspan="2") CALCULADORA1
+			tr
+				td Ingrese A:
+				td 
+					input(id="a")
+			tr
+				td Ingrese B:
+				td 
+					input(id="b")
+			tr
+				td(colspan="2")
+					button(onclick="sumar();") sumar
+					button(onclick="restar();") restar
+					button(onclick="multiplicar();") multiplicar
+					button(onclick="enviarSocket();") Enviar
+					button(onclick="postSend();") postSend
+					a(href="perfil") redireccion
+			tr
+				td(colspan="2")
+					div#rsta
+		script.
+			var ws = io();
+			$(document).on("ready", function(){
+
+				socketListen();
+			});
+			var socketListen = function(){
+				ws.on( "data_res", function(msn){
+					alert(msn);
+				});
+			}
+			function enviarSocket(){
+				alert("ENTRO");
+				ws.emit("data_req", "hola");
+			}
+			function postSend(){
+				$.post('/jaja',{
+					nombre:'Luis Torres Carpio 1'
+				},function(msn){
+					alert(msn);
+				});
+			}
+		
+		

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+html(lang="en")
+head
+	meta(charset="UTF-8")
+	title Sistema de Ventas v.1.0
+	//- link(rel="stylesheet", href="css/w3.css")
+	script(src="js/jquery-1.9.1.js")
+	script(src='js/ini.js')
+	script(src='js/luitorc.js')
+
+	link(href="lib/bootstrap-4.0.0-alpha.6-dist/css/bootstrap.css", rel="stylesheet")
+	link(href="lib/font-awesome-4.7.0/css/font-awesome.min.css", rel="stylesheet")
+	link(rel="stylesheet",href="lib/jquery-toast-plugin-master/src/jquery.toast.css")
+	script(src="lib/jquery-toast-plugin-master/src/jquery.toast.js")
+	script(src="lib/bootstrap-4.0.0-alpha.6-dist/js/tether.min.js")
+	script(src="lib/bootstrap-4.0.0-alpha.6-dist/js/bootstrap.min.js")
+	link(rel="stylesheet", href="lib/awesomplete-gh-pages/awesomplete.css")
+	script(src="lib/awesomplete-gh-pages/awesomplete.js")
+body
+	include ../template/head.jade
+	br
+	case option
+		when 'regisp'
+			block __regisProduct
+		when 'viewp'
+			block __viewProduct
+	script
+	

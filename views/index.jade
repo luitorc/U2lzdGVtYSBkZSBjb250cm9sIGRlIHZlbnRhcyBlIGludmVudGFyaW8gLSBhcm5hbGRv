@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+html(lang="en")
+head
+	meta(charset="UTF-8")
+	title #{title}
+	script(src="js/jquery-1.9.1.js")
+	script(src='js/ini.js')
+	script(src='js/luitorc.js')
+	link(href="lib/bootstrap-4.0.0-alpha.6-dist/css/bootstrap.css", rel="stylesheet")
+	link(href="lib/font-awesome-4.7.0/css/font-awesome.min.css", rel="stylesheet")
+	link(rel="stylesheet",href="lib/jquery-toast-plugin-master/src/jquery.toast.css")
+	style.
+		body{
+			background-color:#EFEFEF;
+			margin:0px;
+		}
+
+body
+	.section(style='background-color:#282A6F;color:white;padding:10px;',class='text-center')
+		.container
+			.row
+				.col-12
+					h2 Sistema de Ventas e Inventario
+	br
+	.section
+		.container
+			.row
+				.col-6
+					img(src='ico/presentacion1.jpg',width='500')
+				.col-6
+					.form-group
+						label(for='login') User Name
+						input#login.form-control(type='text', aria-describedby='emailHelp', placeholder='Escriba aqui su Nombre de Usuario',autofocus)
+						small#emailHelp.form-text.text-muted Ingrese su Nombre de Usuario
+					.form-group
+						label(for='password') Password
+						input#password.form-control(type='password', placeholder='Ingrese aqui su Contraseña',onkeyup="if(event.keyCode == 13) logear();")
+						small#emailHelp.form-text.text-muted Ingrese su Contaseña
+					button.btn.btn-primary(onclick="logear();") Ingresar
+
+
+	script(src="lib/jquery-toast-plugin-master/src/jquery.toast.js")
+	script(src="lib/bootstrap-4.0.0-alpha.6-dist/js/tether.min.js")
+	script(src="lib/bootstrap-4.0.0-alpha.6-dist/js/bootstrap.min.js")
+	script.
+		function logear(){
+			$.post('/user@logear', {
+				login: $("#login").val()
+				,password: $("#password").val()
+			}, function(dt, textStatus, xhr) {
+				console.log(dt);
+				if(dt)
+					window.location.href='/principal?option=viewp';
+				else
+					alert("Login o Passwrod Incorrecta");
+			},"json");		
+		}
+	

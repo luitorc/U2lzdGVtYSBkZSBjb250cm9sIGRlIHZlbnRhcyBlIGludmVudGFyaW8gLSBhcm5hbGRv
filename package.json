@@ -1,0 +1,27 @@
+{
+  "name": "sistema_inventario-pg",
+  "version": "1.0.0",
+  "description": "android socket application",
+  "main": "server.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "author": "sreejesh pillai",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "1.15.1",
+    "colors": "1.1.2",
+    "consolidate": "0.8.0",
+    "cookie-parser": "1.4.3",
+    "express": "4.13.4",
+    "express-session": "1.14.0",
+    "jade": "1.11.0",
+    "node-pre-gyp": "0.6.28",
+    "open": "0.0.5",
+    "semver": "5.1.1",
+    "socket.io": "1.4.6",
+    "pg": "^6.1.2"
+  }
+}

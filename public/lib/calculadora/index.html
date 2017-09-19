@@ -1,0 +1,82 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+	<title>Calculadora</title> 
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+	<link rel="stylesheet" type="text/css" href="resources/calculadora.css">
+	<script type="text/javascript" src="resources/calculadora.js"></script>
+</head>
+<body>
+<br />
+<br />
+<br />
+	<input type="text" class='form-control' id="example" data-container="body" data-placement="bottom" data-toggle="popover"/>
+	
+
+<script src="https://code.jquery.com/jquery-3.1.1.slim.min.js" integrity="sha384-A7FZj7v+d/sdmMqp/nOQwliLvUsJfDHW+k9Omg/a/EheAdgtzNs3hpfag6Ed950n" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
+<script>
+	$(function () {
+	    $('#example').popover({
+		  trigger: 'click'
+		  ,html: true
+		  ,content: "<div class='calculadora' form='' action='#' name='calculadora' id='calculadora'>"
+				+"		<br>"
+				+"		<p id='textoPantalla'>0</p>"
+				+"		<p>"
+				+"		<input type='button' class='largo' value='Retr' onclick='retro()'>"
+				+"		<input type='button' class='largo' value='CE' onclick='borradoParcial()'>"
+				+"		<input type='button' class='largo' value='C' onclick='borradoTotal()'>"
+				+"		</p>"
+				+"		<p>"
+				+"		<input type='button' value='7' onclick='numero(7)'>"
+				+"		<input type='button' value='8' onclick='numero(&#39;8&#39;)'>"
+				+"		<input type='button' value='9' onclick='numero(&#39;9&#39;)'>"
+				+"		<input type='button' value='/' onclick='operar(&#39;/&#39;)'>"
+				+"		<input type='button' value='Raiz' onclick='raizc()'>"
+				+"		</p>"
+				+"		<p>"
+				+"		<input type='button' value='4' onclick='numero(&#39;4&#39;)'>"
+				+"		<input type='button' value='5' onclick='numero(&#39;5&#39;)'>"
+				+"		<input type='button' value='6' onclick='numero(&#39;6&#39;)'>"
+				+"		<input type='button' value='*' onclick='operar(&#39;*&#39;)'>"
+				+"		<input type='button' value='%' onclick='porcent()'>"
+				+"		</p>"
+				+"		<p>"
+				+"		<input type='button' value='1' onclick='numero(&#39;1&#39;)'>"
+				+"		<input type='button' value='2' onclick='numero(&#39;2&#39;)'>"
+				+"		<input type='button' value='3' onclick='numero(&#39;3&#39;)'>"
+				+"		<input type='button' value='-' onclick='operar(&#39;-&#39;)'>"
+				+"		<input type='button' value='1/x' onclick='inve()'>"
+				+"		</p>"
+				+"		<p>"
+				+"		<input type='button' value='0' onclick='numero(&#39;0&#39;)'>"
+				+"		<input type='button' value='+/-' onclick='opuest()'>"
+				+"		<input type='button' value='.' onclick='numero(&#39;.&#39;)'>"
+				+"		<input type='button' value='+' onclick='operar(&#39;+&#39;)'>"
+				+"		<input type='button' value='=' onclick='igualar()'>"
+				+"		</p>"
+				+"		<p>"
+				+"			<button class='btn btn-primary' style='cursor: pointer;' title='Pasar Resultado a Precio Total' onclick='moveResult()'>Establecer</button>"
+				+"		</p>"
+				+"	</div>"
+				+"<script>"
+				+"pantalla=document.getElementById('textoPantalla');"
+				+"document.onkeydown = teclado;" 
+				+"x='0'; //número en pantalla"
+				+"xi=1; //iniciar número en pantalla: 1=si; 0=no;"
+				+"coma=0; //estado coma decimal 0=no, 1=si;"
+				+"ni=0; //número oculto o en espera."
+				+"op='no'; //operación en curso; 'no' =  sin operación."
+				+""
+		});
+	});	
+	function moveResult(){
+		$("#example").val( $("#textoPantalla").text() );
+		$("#example").popover('hide');
+	}
+</script>
+</body>
+</html>

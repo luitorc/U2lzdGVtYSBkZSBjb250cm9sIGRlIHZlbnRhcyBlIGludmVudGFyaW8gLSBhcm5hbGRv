@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+html(lang="en")
+	head
+		meta(charset="UTF-8")
+		meta(name="viewport", content="width=device-width, initial-scale=1")
+		title #{title}
+		//- link(rel="stylesheet", href="css/w3.css")
+		link(href="lib/bootstrap-4.0.0-alpha.6-dist/css/bootstrap.css", rel="stylesheet")
+		link(href="css/jquery.dataTables.min.css", rel="stylesheet")
+		link(href="lib/font-awesome-4.7.0/css/font-awesome.min.css", rel="stylesheet")
+		script(src='js/jquery-1.9.1.js')
+		script(src='js/ini.js')
+		style.
+			.w3-container{
+				width:70%;
+				margin:auto;
+			}
+			button{
+				cursor:pointer;
+			}
+	body
+		include ./template/head.jade
+		br
+		div.w3-container
+			div#tb_product_list
+		script(src='js/jquery.dataTables.min.js')
+		script(src="lib/bootstrap-4.0.0-alpha.6-dist/js/tether.min.js")
+		script(src="lib/bootstrap-4.0.0-alpha.6-dist/js/bootstrap.min.js")
+		script.
+			var typeDivisa = '';
+			$(window).ready(function(){
+				$.post('/config@getTypeDivisa', { //Get ProductsListInTb
+					
+				}, function(divisa, textStatus, xhr){
+					typeDivisa = divisa;
+					viewProducts();
+				});
+			});
+			function viewProducts(){
+				$.post("/getProduct",{
+
+				},function(dt){
+					var dh = "<table id='dataTables-example' class='display' cellspacing='0' width=''>"
+					+"<thead>"
+						+"<tr>"
+						+"	<th>Ubi.</th>"
+						+"	<th>Nombre del producto</th>"
+						+"	<th>Stock</th>"
+						+"	<th>Unidad.Medida</th>"
+						+"	<th>Precio de Compra</th>"
+						+"	<th>Precio de Venta</th>"
+						+"	<th>Activo</th>"
+						+"	<th>Acción</th>"
+						+"</tr>"
+					+"</thead>"
+					+"<tbody>";
+					for( i in dt ){
+						dh+="<tr>"
+						+"	<td>"+dt[i].nro_ref+"</td>"
+						+"	<td>"+dt[i].nombrep+"</td>"
+						+"	<td style='font-weight:bold;'>"+dt[i].stock+"</td>"
+						+"	<td>"+dt[i].name_um+"</td>"
+						+"	<td>"+(dt[i].precio_proveedor=="null"?"":""+typeDivisa+dt[i].precio_proveedor)+"</td>"
+						+"	<td>"+(dt[i].precio=="null"?"":""+typeDivisa+dt[i].precio)+"</td>"
+						+"	<td>"+(dt[i].activo==1?'Si':"<span style='color:red;font-weight:bold;'>No")+"</td>"
+						+"	<td style='font-size:20px;'><i class='fa fa-edit' aria-hidden='true' onclick='editp("+dt[i].id_producto+")' style='cursor:pointer;color:orange;' title='Editar Producto'></i>&nbsp;&nbsp;<i class='fa fa-remove' aria-hidden='true' onclick='deleteProduct("+dt[i].id_producto+")' style='cursor:pointer;color:red;' title='Eliminar Producto'></i></td>"
+						+"</tr>";
+						console.log(dt[i].nombrep);
+					}
+					dh+="</tbody>";
+					dh+="</table>";
+					$("#tb_product_list").html(dh);
+
+					$('#dataTables-example').DataTable({
+						responsive: true
+					});
+				});
+			}
+			function editp(id_producto){
+				window.location.href='/principal?option=regisp&idp='+id_producto;
+			}
+			function deleteProduct(id){
+				$.post("/deleteProduct",{
+					id_producto: id
+				},function(dt){
+					if( dt.success ){
+						alert("Producto eliminado exitosamente");
+						viewProducts();
+					}
+					console.log(dt);
+				});
+			}
+
+			

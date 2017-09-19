@@ -1,0 +1,121 @@
+style.
+	body{
+		background-color:#EFEFEF;
+		margin:0px;
+	}
+	.menu1{
+		text-align:center;
+		background-color:#282A6F;
+		color:white;
+	}
+	.btn-menu1{
+		background-color: #1DADC2;
+		border-radius:6px;
+		padding:6px;
+		cursor:pointer;
+		margin:4px;
+	}
+	.menu1 a:hover{
+		background:#E7712A;
+	}
+	a{
+		color:white;
+		font-size:17px;
+	}
+	a.active{
+		background-color:#E7712A;
+		color:white;
+	}
+div.menu1
+	div(style='position:absolute;') <b>Usuario:</b> #{user.login}
+	i.fa.fa-envelope-o(id='notification',aria-hidden='true',style='position:absolute;right:80px;top:10px;font-size:30px;cursor:pointer;',data-placement="Left"
+	,title='Visualizar Productos Agotados')
+	i.fa.fa-sign-out(id='notification',aria-hidden='true',style='position:absolute;right:20px;top:10px;font-size:30px;cursor:pointer;color:red;',data-placement="Left",title='Cerrar Sessión',onclick="window.location.href='/user@session_close'")
+	div(style='text-align:center;font-size:25px;height:80px;padding:1px;') Sistema de Ventas e Inventario
+		br
+
+		a(href='/principal?option=viewp',class='btn-menu1') Lista de Productos
+		a(href='/principal?option=regisp',class='btn-menu1') Registrar productos
+		a(href='/product_management',class='btn-menu1') Administrar Productos
+		a(href='/sales',class='btn-menu1') Ventas 
+		a(href='/receipt',class='btn-menu1') Buscar recibo 
+		a(href='/config',class='btn-menu1') Configuración 
+		//- a(href='#') Configuración
+	
+script.
+	$(document).ready(function() {
+		stockView();
+		
+	});
+	function stockView(){
+		$.post('/producto@getStockAll', {
+			
+		}, function(dt, textStatus, xhr) {
+			//- console.log(dt);
+			var danger = false
+			,warning = false;
+			var dh = "<tr>"
+					+"	<th>Nro</th>"
+					+"	<th>Producto</th>"
+					+"	<th>Stock</th>"
+					+"</tr>";
+			var bgColor = "white";
+			var textColor = "black";
+			for( i in dt ){
+				if( parseInt(dt[i].stock) < 6 ){
+					warning = true;
+					bgColor = "#FFFED8";
+					textColor = "#FF8C1C";
+					if( parseInt(dt[i].stock) < 4 ){
+						danger = true;
+						bgColor = "#FFDCE4";
+						textColor = "red";
+					}
+					dh+="<tr style='background-color:"+bgColor+";'>"
+						+"   <td>"+(parseInt(i)+1)+"</td>"
+						+"   <td><a href='/principal?option=regisp&idp="+dt[i].id_producto+"' style='color:blue;font-size:12px;'>"+dt[i].nombrep+"</a></td>"
+						+"   <td style='color:"+textColor+";'><b>"+dt[i].stock+"</b></td>"
+						+"</tr>";
+				}
+
+			}
+			$('#notification').popover({
+				trigger: 'click'
+				,html: true
+				,content: "<div style='width: 260px;height: 300px;overflow: scroll;overflow-x:hidden;'>"
+						+"<br><br><br><br><br><br><table border='1' id='alert_products'>"
+						+dh+"</table></div>"
+			});
+			//- $("#alert_products").html(dh);
+
+			if( warning || danger){
+
+				var activate = 0; 
+				if(warning)
+					activate = 2; //Alerta
+				if(danger)
+					activate = 1; //Peligro
+				alertar(activate);
+			}else{
+				console.log("NO ENTRO");
+			}
+		},"json");
+	}
+	function alertar(grade){
+		var color = "#FFFFFF";
+		switch(grade){
+			case 2:
+				color = "#FFA200"
+				break;
+			case 1:
+				color = "#FF0000"
+				break;
+
+		}
+		$("#notification").css({
+			"font-weight":"bold"
+			,"color": color
+		});	
+	}
+
+	

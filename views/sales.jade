@@ -1,0 +1,357 @@
+extends ./layout/sales
+block viewSales
+	ul.nav.nav-tabs(style='background-color:#828282;display:none;')
+		li.nav-item
+			a.nav-link.active(href='#') Active
+		li.nav-item
+			a.nav-link(href='#') Link
+		li.nav-item
+			a.nav-link(href='#') Link
+		li.nav-item
+			a.nav-link.disabled(href='#') Disabled
+	br
+	div(class='section')
+		div(class='container')
+			div
+				input(type='checkbox',id='advance_active')
+				label(for='advance_active') &nbsp;Opciones Avanzadas
+			div(class='row justify-content-md-center',style='background-color:#F0F0F0;')
+				div(class='col-6 optionSelectDate',style='display:none;')
+					| Busqueda por: 
+					select#view_type()
+							option Dia
+							option Semana
+							option Mes
+							option Año
+			div(class='row justify-content-md-center',style='background-color:#F4F0D9;display:none;',id='search_advance')
+				div(class='col-6')
+					u Busqueda Avanzada<br>
+					
+					div(class='input-group')
+						input#dia(type='number',placeholder='Dia',style='width:60px;',min='1',class='form-control')
+						select#mes(class='form-control')
+							option(value='01') Enero
+							option(value='02') Febrero
+							option(value='03') Marzo
+							option(value='04') Abril
+							option(value='05') Mayo
+							option(value='06') Junio
+							option(value='07') Julio
+							option(value='08') Agosto
+							option(value='09') Septiembre
+							option(value='10') Octubre
+							option(value='11') Noviembre
+							option(value='12') Diciembre
+						input#anio(type='number',placeholder='Año',value='2017',style='width:80px;',min='1000',class='form-control')
+						| &nbsp;
+						button(class='btn btn-primary',style='cursor:pointer;',onclick='setviewsales()') Ejecutar
+					br
+			div(class='row justify-content-md-center',style='background-color:#EBE5CE;display:none;',id='search_dateRange')
+				div(class='col-6')
+					| Busqueda entre 2 fechas:<br> 
+					input(type='date',id='date_ini',placeholder='')
+					|  - 
+					input(type='date',id='date_fin',placeholder='') 
+					| &nbsp;
+					button(class='btn btn-secondary',style='cursor:pointer;',onclick="setviewsales('toWeek')") Ejecutar
+			div(class='row justify-content-md-center',style='background-color:;',id='acceso_rapido')
+				div(class='col-6')
+					button(class='btn btn-primary',style='cursor:pointer;',onclick="setviewsales('toDay')") Hoy
+					| &nbsp;
+					button(class='btn btn-primary',style='cursor:pointer;',onclick="setviewsales('toWeek')") Esta Semana
+					| &nbsp;
+					button(class='btn btn-primary',style='cursor:pointer;',onclick="setviewsales('toMonth')") Este Mes
+					| &nbsp;
+					button(class='btn btn-primary',style='cursor:pointer;',onclick="setviewsales('toYear')") Este Año
+	br
+	h4(style='',id='searchMessage')
+	br
+	style.
+		/*#product_list-table td{
+			padding: 6px 4px
+		}
+			
+		
+		#product_list-table{
+			border-color:#EBEBEB;
+			background:white;
+			box-shadow:3px 3px 10px #BBBBBB;
+		}*/
+		#sales_results{
+			width:1000px;
+		}
+	div#sales_results
+	script.
+		var mesName = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Noviembre','Diciembre'];
+		var checked_advance = false;
+		var typeDivisa = "";
+		$(window).ready(function(){
+			var date = $l.getFechaStr(new Date()).split("-");
+			$("#dia").val(date[2]);
+			$("#mes").val(date[1]);
+			$("#anio").val(date[0]);
+			getThisWeek(); //Get Semana range
+			$.post('/config@getTypeDivisa', { //Get ProductsListInTb
+					
+			}, function(divisa, textStatus, xhr){
+				typeDivisa = divisa;
+				setviewsales('toDay');
+			});
+			$("#advance_active").change(function(){
+				//- console.log(this.checked);
+				checked_advance = this.checked;
+				if(this.checked){
+					$("#acceso_rapido").hide();
+					if($("#view_type").val()!='Semana')
+						$("#search_advance").show();
+					$("#search_dateRange").show();
+
+					$(".optionSelectDate").show();
+				}else{
+					$("#search_advance").hide();
+					$("#search_dateRange").hide();
+					$("#acceso_rapido").show();
+					$(".optionSelectDate").hide();
+				}
+			});
+			//En rango de fechas 
+			//- var toDate = $l.getFechaStr(new Date());
+			//- $("#date_ini").val(toDate);
+			//- $("#date_fin").val(toDate);
+			
+			$("#view_type").change(function(){
+				var date = $l.getFechaStr(new Date()).split("-");
+				$("#dia").val(date[2]);
+				$("#mes").val(date[1]);
+				$("#anio").val(date[0]);
+				$("#searchMessage").html("");
+				//- console.log(this.value);
+				switch(this.value){
+					case 'Dia':
+						if(checked_advance){
+							$("#search_advance").show();
+							$("#sales_results").html("");
+							//- $("#search_dateRange").hide();						
+						}
+						$("#dia").show();
+						$("#mes").show();
+						$("#anio").show();
+						
+						break;
+					case 'Semana':
+						if(checked_advance){
+							$("#search_advance").hide();
+							$("#sales_results").html("");
+							//- $("#search_dateRange").show();
+						}
+						break;
+					case 'Mes':
+						if(checked_advance){
+							$("#search_advance").show();
+							$("#sales_results").html("");
+							//- $("#search_dateRange").hide();
+						}
+						$("#dia").hide();
+						$("#mes").show();
+						$("#anio").show();
+						break;
+					case 'Año':
+						if(checked_advance){
+							$("#search_advance").show();
+							$("#sales_results").html("");
+							//- $("#search_dateRange").hide();
+						}
+						$("#dia").hide();
+						$("#mes").hide();
+						$("#anio").show();
+						break;
+				}
+			});
+		});
+		//Esta Semana
+		function getThisWeek() {
+		    //- var dayW = new Date();
+		    //- date.getDay(); //Get day WEEK
+		    var toDate = $l.getFechaStr(new Date());
+		    console.log("Fecha de Hoy: "+toDate);
+			var d = new Date();
+			//- var toDay = parseInt(date[2])-parseInt(dayW);
+			//- var toDay = d.getDate();
+			d.setDate(d.getDate()-d.getDay()); // resamos Day x 7
+			var toDay = d.getDate();
+			var toMonth = d.getMonth();
+			var toYear = d.getFullYear();
+			var dateBefore = $l.getFechaStr(d);
+		    $("#date_ini").val(dateBefore);
+			var dias = 0;
+			for(var i=d.getDay();i<6;i++){
+				dias++;
+			}
+			d.setDate(d.getDate()+dias);
+			var dateAfter = $l.getFechaStr(d);
+			$("#date_fin").val(dateAfter);
+
+			//- var dateAfter = $l.getFechaStr(new Date()).split("-");
+			console.log(dateBefore+" - "+dateAfter);
+		    //- return Math.ceil(date.getDate() / 7);
+		}
+
+		
+		function setviewsales(fn_rapida){
+			if(fn_rapida !=undefined){
+				console.log("Existe");
+				var date = $l.getFechaStr(new Date()).split("-");
+				console.log(date);
+				$("#searchMessage").html("");
+				switch(fn_rapida){
+					case 'toDay':
+						if(!checked_advance){
+							$("#view_type").val("Dia").change();
+							$("#dia").val(date[2]);
+							$("#mes").val(date[1]);
+							$("#anio").val(date[0]);
+						}
+
+						$("#searchMessage").html(date.join('-'));
+						break;
+					case 'toWeek':
+						if(!checked_advance){
+							$("#view_type").val("Semana").change();
+							getThisWeek();
+						}
+						//- $("#dia").val(date[2]);
+						//- $("#mes").val(date[1]);
+						//- $("#anio").val(date[0]);
+						$("#searchMessage").html( $("#date_ini").val() +" hasta "+ $("#date_fin").val() );
+						break;
+					case 'toMonth':
+						if(!checked_advance){
+							$("#view_type").val("Mes").change();
+							$("#dia").val(date[2]);
+							$("#mes").val(date[1]);
+							$("#anio").val(date[0]);
+						}
+						$("#searchMessage").html(mesName[parseInt(date[1])-1]+" de "+$("#anio").val());
+						break;
+					case 'toYear':
+						if(!checked_advance){
+							$("#view_type").val("Año").change();
+							$("#dia").val(date[2]);
+							$("#mes").val(date[1]);
+							$("#anio").val(date[0]);
+						}
+						$("#searchMessage").html($("#anio").val());
+						break;
+				}
+			}else{
+				switch($("#view_type").val()){
+					case 'Dia':
+						$("#searchMessage").html($("#anio").val()+"-"+$("#mes").val()+"-"+$("#dia").val());
+						break;
+					case 'Semana':
+						$("#searchMessage").html( $("#date_ini").val() +" hasta "+ $("#date_fin").val() );
+						break;
+					case 'Mes':
+						$("#searchMessage").html(mesName[parseInt($("#mes").val())-1]+" de "+$("#anio").val());
+						break;
+					case 'Año':
+						$("#searchMessage").html($("#anio").val());
+						break;
+				}
+			}
+			var dia = $("#dia").val();
+			$.post("/sales_setviewsales",{ //Obtenemos la vista de ventas por tipo seleccionado
+				timeType: $("#view_type").val()
+				,dia: dia.length==1?'0'+dia:dia
+				,mes: $("#mes").val()
+				,anio: $("#anio").val()
+				,date_ini: $("#date_ini").val()
+				,date_fin: $("#date_fin").val()
+			},function(dt){
+				console.log(dt);
+				var gananciaTotal = 0;		
+				var totalSales = 0;		
+				var objv = dt;
+				var dH = ""
+				+"<table border='0' class='' id='product_list-table' style=''>"
+					+"<thead>"
+					+"<tr>"
+						//- +"<th>Nro</th>"
+						+"<th>Cod.</th>"
+						+"<th>Cliente</th>"
+						+"<th>Nro Boleta</th>"
+						+"<th>Nro Factura</th>"
+						+"<th>Total Venta</th>"
+						+"<th>Inversión</th>"
+						+"<th>% Desc</th>"
+						+"<th>Fecha / Hora</th>"
+						+"<th>Acción</th>"
+					+"</tr>"
+					+"</thead>"
+					+"<tbody>";
+				for( i in objv ){
+					dH += ""
+					+"<tr id='idv_"+objv[i].id_venta+"'>"
+						//- +"<td>"+(parseInt(i)+1)+"</td>"
+						+"<td>"+objv[i].id_venta+"</td>"
+						+"<td>"+objv[i].nombre_cl+"</td>"
+						+"<td>"+(objv[i].nro_boleta==""?"S/N":objv[i].nro_boleta)+"</td>"
+						+"<td>"+(objv[i].nro_factura==""?"S/N":objv[i].nro_boleta)+"</td>"
+						+"<td style='color:#3239C6;'>"+typeDivisa+objv[i].total.toFixed(2)+"</td>"
+						+"<td style='color:#FC3803;'>"+typeDivisa+objv[i].total_proveedor.toFixed(2)+"</td>"
+						+"<td style='color:#F700D7;font-weight:bold;'> "+(objv[i].discount_percent==null?'':"-%"+objv[i].discount_percent)+"</td>"
+						+"<td>"+objv[i].fecha.split('T')[0]+" / "+objv[i].hora+"</td>"
+						+"<td>"
+							+"<i class='fa fa-search' style='color:#0066FF;font-weight:bold;cursor:pointer;' onclick=\"window.location.href='/receipt?idv="+objv[i].id_venta+"'\" title='Ver Recibo de Venta'></i>"
+							+"&nbsp;&nbsp;&nbsp;<i class='fa fa-minus-square' style='color:#FF8A00;font-weight:bold;cursor:pointer;' onclick=\"restaurarProducts("+objv[i].id_venta+");\" title='Restaurar Productos de la Venta'></i>"
+							+"&nbsp;&nbsp;&nbsp;<i class='fa fa-remove' style='color:#FF0000;font-weight:bold;cursor:pointer;' onclick=\"ventaDelete("+objv[i].id_venta+");\" title='Eliminar Venta'></i>"
+						+"</td>"
+					+"</tr>";
+					totalSales+=parseFloat(objv[i].total);
+					gananciaTotal+=parseFloat(objv[i].total_proveedor);
+				}
+				dH+="</tbody>"
+					+"</table>";
+				//Total
+				dH+="<table border='0'>"
+					+"<tr>"
+						+"<th align='right'style='font-size:22px;color:#3239C6;'>VENTA TOTAL: </th>"
+						+"<th align='left' style='font-size:20px;color:#000;'> "+typeDivisa+totalSales.toFixed(2)+" { </th>"
+						+"<th width='30px'></th>"
+						+"<th align='right'style='font-size:22px;color:#FC3803;'>Inversión: </th>"
+						+"<th align='left' style='font-size:20px;color:#000;'> "+typeDivisa+gananciaTotal.toFixed(2)+"</th>"
+						+"<th width='30px'></th>"
+						+"<th align='right'style='font-size:22px;color:#38AE0A;'>Ganancia: </th>"
+						+"<th align='left' style='font-size:20px;color:#000;'> "+typeDivisa+(totalSales-gananciaTotal).toFixed(2)+"</th>"
+						+"<th style='font-size:20px;color:#3239C6;'>&nbsp;&nbsp;&nbsp;}</th>"
+					+"</tr>"
+				+"</table>";
+				$("#sales_results").html(dH);
+
+				$('#product_list-table').DataTable({
+					//- responsive: true
+				});
+			});
+		}
+		function restaurarProducts(id_venta){
+			$.post("/sales@restaurarProducts",{ //Obtenemos la vista de ventas por tipo seleccionado
+				id_venta: id_venta
+			},function(confirm){
+				//- console.log(dt);
+				if(confirm)
+					$("#idv_"+id_venta).remove();
+				else
+					alert("Error al Restaurar Venta");
+			});
+		}
+		function ventaDelete(id_venta){
+			$.post("/venta@deleteSale",{ //Obtenemos la vista de ventas por tipo seleccionado
+				id_venta: id_venta
+			},function(confirm){
+				console.log(confirm);
+				if(confirm)
+					$("#idv_"+id_venta).remove();
+				else
+					alert("Error al Eliminar Venta");
+			});
+		}

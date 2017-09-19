@@ -1,0 +1,663 @@
+extends ./layout/principal
+block __shoppingCart
+	style.
+		#cartProduct-table th{
+			padding: 4px 6px;
+		}
+		body{
+			font-size:14px;
+		}
+		
+	div(align='center')#shoppingCart
+	script.
+		var typeDivisa = '$ ';
+		
+		$(window).ready(function(){
+			setStructure();
+
+			$.post('/config@getTypeDivisa', { //Get ProductsListInTb
+					
+			}, function(divisa, textStatus, xhr){
+				typeDivisa = divisa;
+				getCheckSession(0,function(){
+				//Cuando se actualiza un producto y esta en carrito
+					$("#cpr#{idp}").css({'background-color':'#83FF67'});
+				});
+			});
+
+			
+		});
+		function setStructure(){
+			var dH = "<table border='1' width='100%' id='cartProduct-table'  cellspacing='0' style='border-color:#FF8B6C;box-shadow:1px 3px 6px #AFAFAF;'>"
+				+"<tr>"
+					+"<th colspan='6' align='center' style='background-color:#D54B07;color:white;' class='text-center'>RECIBO DE VENTA</th>"
+				+"</tr>"
+				+"<tr>"
+					+"<th colspan='3' align='left' >"
+						+"Nro Boleta: <input type='text' style='width:100px;' value='' id='nro_boleta'>"
+					+"</th>"
+					+"<th colspan='3' align='left' >"
+						+"Nro Factura: <input type='text' style='width:100px;' value='' id='nro_factura'>"
+					+"</th>"
+				+"</tr>"
+				+"<tr>"
+					+"<th colspan='6' align='left' >"
+						+"Nombres del Cliente: <input type='text' style='width:300px;' value='' id='nombre_cl'>"
+					+"</th>"
+				+"</tr>"
+				+"<tr>"
+					+"<th colspan='6' align='left' >"
+						+"Dirección: <input type='text' style='width:370px;' value='' id='direccion_cl'>"
+					+"</th>"
+				+"</tr>"
+				+"<tr>"
+					+"<th colspan='6' align='left' >"
+						+" TELF: <input type='text' style='width:100px;' value='' id='telf_cl'>"
+						+" DNI: <input type='text' style='width:70px;' value='' id='dni_cl'>"
+						+" RUC: <input type='text' style='width:123px;' value='' id='ruc_cl'>"
+					+"</th>"
+				+"</tr>"
+				+"<tr>"
+					+"<th>Nro</th>"
+					+"<th>Cant</th>"
+					+"<th>Producto</th>"
+					+"<th>Precio</th>"
+					+"<th>Sub-Total</th>"
+					+"<th></th>"
+				+"</tr>";
+			dH+="<tbody id='details_recibo_venta'></tbody>";
+			dH+="<tr>"
+				dH+="<td colspan='6' align='center'>"
+					+"<button style='padding:10px;cursor:pointer;width:100px;' onclick='sellCart()'>Vender</button>"
+					+"</td>"
+			dH+="</tr>"
+			+"</table>";
+			$("#shoppingCart").html(dH);
+
+			
+		}
+		function getCheckSession(idp){
+			$("#descuento_btn").popover('hide');
+			$.post('/getCheckSession',{
+
+			},function(obj){
+				var dH = "";
+				//- var objTotal = obj;
+				listProductR = obj.listProductR;
+				var cont = 0;
+				for( i in listProductR ){
+					cont++;
+					var id_producto = listProductR[i].id_producto;
+					dH+="<tr class='cartProduct-tr' id='cpr"+id_producto+"' idp='"+id_producto+"'>"
+						+"<td style='padding:2px 5px;'>"+cont+") </td>"
+						+"<td onclick='changeCant("+id_producto+");'>"+listProductR[i].cantList+" "+listProductR[i].name_um+"</td>"
+						+"<td>"+listProductR[i].nombrep+"</td>"
+						+"<td>"+typeDivisa+parseFloat(listProductR[i].precio).toFixed(2)+"</td>"
+						+"<td>"+typeDivisa+listProductR[i].subTotal.toFixed(2)+"</td>"
+						+"<td align='center'><i class='fa fa-remove' aria-hidden='true'  onclick='deleteProductCart("+parseInt(i)+","+id_producto+")' style='cursor:pointer;color:red;font-size:20px;' title='Retirar Producto de la Lista'></i> </td>"
+					+"</tr>";
+
+					//update the list left
+					$("#cantList_"+id_producto).val(listProductR[i].cantList);
+				}
+
+				dH+="<tr>"
+					dH+="<td colspan='4' align='right'>TOTAL: </td>"
+					+"<td style='color:red;font-size:20px;font-weight:bold;'>"+typeDivisa+"<span id='totalAbs'>"+(obj.discount_state=="true"?(obj.total-obj.discount_price).toFixed(2): obj.total.toFixed(2))+"</span></td>"
+						+"<td align='center'><i class='fa fa-hand-scissors-o' aria-hidden='true' style='font-size:25px;color:#FF00D2;cursor:pointer;' id='descuento_btn' title='Aplicar un Descuento' onclick=\"\"></i></td>";
+				dH+="</tr>"
+				$("#details_recibo_venta").html(dH);
+
+				$('#descuento_btn').popover({
+					trigger: 'click'
+					,html: true
+					,content: "% <input type='number' style='width:45px;' id='percent_discount' value='"+(obj.discount_state=="true"?obj.discount_percent+"":"0")+"'>&nbsp;"
+							+"<button style='cursor:pointer' onclick='applyDiscount()'>Efectuar</button>"
+							+"<div>Precio Real: <b>"
+								+typeDivisa+"<span id='total_preview'>"+obj.total.toFixed(2)+"</span>"
+							+"</b></div>"
+					,placement:'bottom'
+				}).attr('title','Aplicar un Descuento').on('shown.bs.popover', function () {
+					$("#percent_discount").select();
+				});
+				//vefiry discount
+				console.log(obj.discount_state);
+				hoverListProduct();
+				$("#cpr"+idp).css({'background-color':'yellow'});
+			});
+		}
+		function applyDiscount(){
+			var pd = $("#percent_discount").val();
+			var total = parseFloat($("#total_preview").html());
+			var discount = (pd*total)/100;
+			var setTotal = total - discount;
+			console.log(setTotal);
+			
+			$.post('/tool@discount',{ //c-saleManagement
+				discount_state: pd>0?true:false
+				,discount_percent: pd
+				,discount_price: discount
+			},function(dt){
+				console.log(dt);
+				getCheckSession(0); //llamar a datos de session cart
+			});
+		}
+		function sellCart(){
+			if( $("#nombre_cl").val() == "" ){
+				$.toast({
+				    
+				    heading: 'Registre Nombre del Usuario', // Optional heading to be shown on the toast
+				    icon: 'warning', // Type of toast icon
+				    showHideTransition: 'fade', // fade, slide or plain
+				    allowToastClose: true, // Boolean value true or false
+				    hideAfter: 3000, // false to make it sticky or number representing the miliseconds as time after which toast needs to be hidden
+				    stack: 5, // false if there should be only one toast at a time or a number representing the maximum number of toasts to be shown at a time
+				    position: 'bottom-center',
+				    textAlign: 'left',  // Text alignment i.e. left, right or center
+				    loader: true,  // Whether to show loader or not. True by default
+				    loaderBg: '#9ec600',  // Background color of the toast loader
+				});
+				$("#nombre_cl").css({"background-color":"#FEADAD"}).focus();
+				return;
+			}
+			$.post('/sellCart',{ //c-saleManagement
+				nro_boleta: $("#nro_boleta").val()
+				,nro_factura: $("#nro_factura").val()
+				,nombre_cl: $("#nombre_cl").val()
+				,direccion_cl: $("#direccion_cl").val()
+				,telf_cl: $("#telf_cl").val()
+				,dni_cl: $("#dni_cl").val()
+				,ruc_cl: $("#ruc_cl").val()
+			},function(obj){
+				alert(obj.msn);
+				window.location.href="/receipt?idv="+obj.id_venta;
+			},"json");
+		}
+		function changeCant(id_producto){
+			$("#cantList_"+id_producto).focus();
+			//- $("#cantList_"+id_producto).setSelectionRange(0, 0);
+		}
+		function hoverListProduct(){
+			$(".cartProduct-tr").hover(function() {
+				var id_producto = $(this).attr('idp');
+
+				$("#lpr"+id_producto).css({'background-color':'yellow'});
+				$(this).css({'background-color':'yellow'});
+			}, function() {
+				var id_producto = $(this).attr('idp');
+				$("#lpr"+id_producto).css({'background-color':''});
+				$(this).css({'background-color':''});
+			});
+		}
+		function deleteProductCart(pos,idp){
+			$.post('/deleteProductCart',{
+				pos: pos 
+			},function(obj){
+				//- alert('eliminado pos: '+obj.msn);
+				getCheckSession();
+				$("#lpr"+idp).css({'background-color':''});
+				$("#cantList_"+idp).val(1);
+			},"json");
+		}
+			
+
+block __viewProduct
+	link(href="css/jquery.dataTables.min.css", rel="stylesheet")
+	script(src='js/jquery.dataTables.min.js')
+	style.
+		.listProduct-tr td{
+			padding:6px 4px;
+		}
+		#listProduct-table td{
+			padding:10px 3px;
+		}
+		
+	div(style='text-align:center;')
+		
+		table(border='0',style='margin:auto;width:90%;')
+			tr
+				td(width='55%',valign='top',style='padding:0px 20px 0px 0px;')
+					div#producsList_tb
+				td(width='45%',valign='top')
+					block __shoppingCart
+		
+	script.
+		var typeDivisa = '$ ';
+		$(window).ready(function(){
+			$("#lpr#{idp}").css({'background-color':'#83FF67'});
+
+			$.post('/config@getTypeDivisa', { //Get ProductsListInTb
+					
+			}, function(divisa, textStatus, xhr){
+				typeDivisa = divisa;
+				getProductsListInTb();
+			});
+		});
+		function getProductsListInTb(){
+			$.post('/producto@getData', { //Get ProductsListInTb
+					
+			}, function(products, textStatus, xhr) {
+					console.log(products);
+				var dH = "<table border='1' cellspacing='0' style='border-color:#E9E9E9;margin:auto;width:100%;text-align:left; ' id='listProduct-table'>"
+					+"<thead>"
+					+"<tr>"
+						+"<th>Ubi.</th>"
+						+"<th>Nombres</th>"
+						+"<th style='display:none;'>Descripción</th>"
+						+"<th>Precio</th>"
+						+"<th>Stock</th>"
+						+"<th>Cant. a Vender:</th>"
+						+"<th>Acción</th>"
+					+"</tr>"
+					+"</thead>";
+				var cont = 0
+				dH+="<tbody>";
+				for(item in products){
+					cont+=1;
+					dH+="<tr class='listProduct-tr' id='lpr"+products[item].id_producto+"' idp='"+products[item].id_producto+"'>"
+						+"<td align='center'><b>"+products[item].nro_ref+"</b> </td>"
+						+"<td>"+products[item].nombrep+"</td>"
+						+"<td style='display:none;'>"+products[item].description+"</td>"
+						+"<td>"+typeDivisa+parseFloat(products[item].precio).toFixed(2)+"</td>"
+						+"<td>"+products[item].stock+"</td>"
+						+"<td> <input type='number' min='1' value='1' style='width:40px;' id='cantList_"+products[item].id_producto+"'> <span style='color:#A52540;'>"+products[item].name_um+"</span>  </td>"
+						+"<td align='center' style='font-size:20px;'><i class='fa fa-mail-forward' aria-hidden='true' onclick=\"saveCheckProduct("+products[item].id_producto+",'"+products[item].nombrep+"','"+products[item].precio+"',"+products[item].stock+")\" style='cursor:pointer;color:#FF6000;' title='Añadir a Recibo'></i>&nbsp;&nbsp;&nbsp; "
+						+"<i class='fa fa-edit' aria-hidden='true' onclick='editp("+products[item].id_producto+")' style='cursor:pointer;color:orange;' title='Editar Producto'></i></td>"
+					+"</tr>";
+				}
+				dH+="</tbody>"
+				+"</table>";
+				//View Results
+				$("#producsList_tb").html(dH);
+
+				$('#listProduct-table').DataTable({
+					responsive: false
+				});
+			});
+		}
+		$(".listProduct-tr").hover(function() {
+			var id_producto = $(this).attr('idp');
+
+			$("#cpr"+id_producto).css({'background-color':'yellow'});
+			$(this).css({'background-color':'yellow'});
+		}, function() {
+			var id_producto = $(this).attr('idp');
+			$("#cpr"+id_producto).css({'background-color':''});
+			$(this).css({'background-color':''});
+		});
+			
+		function saveCheckProduct(id_producto,nombrep,precio,stock_disponible){
+			//Verificamos capacidad de stock
+			if( parseInt($("#cantList_"+id_producto).val()) > stock_disponible ){
+				$("#lpr"+id_producto).css({'background-color':'#FEA4AD'});
+				//- alert("Lo sentimos, Stock insuficiente");
+				$.toast({
+				    heading: 'No hay suficiente Stock', 
+				    icon: 'error', 
+				    showHideTransition: 'slide', 
+				    allowToastClose: true, 
+				    hideAfter: 3000, 
+				    stack: 5,
+				    position: 'bottom-center', 
+				    textAlign: 'left',  // Text alignment i.e. left, right or center
+				    loader: true,  // Whether to show loader or not. True by default
+				    loaderBg: '#550002',  // Background color of the toast loader
+				});
+				return;
+			}
+			$.post('/saveCheckSession',{
+				id_producto: id_producto
+				,cantList: $("#cantList_"+id_producto).val()
+			},function(obj){
+				//- alert(obj.msn);
+				getCheckSession(id_producto);
+			},"json");
+		}
+		function editp(id_producto){
+			window.location.href='?option=regisp&idp='+id_producto;
+		}
+
+block __regisProduct
+	style.
+		#regisProduct-table td{
+			padding: 6px 4px
+		}
+			
+		
+		#regisProduct-table{
+			background-color:white;
+			border-color:#CECECE;
+		}
+
+		
+	div(style='text-align:center;')
+		h4 #{sub_title}
+			if dt.nombrep
+				span(style='color:blue;')  '#{dt.nombrep}'
+		table(style='margin:auto;text-align:left;width:600px;box-shadow:3px 3px 10px #CFCFCF;',border='0',id='regisProduct-table',class='table')
+			tr(style='display:none;')
+				td Id
+				td 
+					input#id_producto(type="text",style='width:40px;',value='#{dt.id_producto}',disabled)
+			tr
+				td Nombre del producto:
+				td 
+					input#nombrep(type="text",value='#{dt.nombrep}',class='form-control')
+			tr
+				td Descripción <span style='color:#868686;'>(Opcional)</span>:
+				td 
+					textarea#description(type="text",style='font-size:12px;',class='form-control',rows='3') #{dt.description}
+			tr
+				td Link del Producto <span style='color:#868686;'>(Opcional)</span>:
+				td 
+					input#link(type="text",style='font-size:12px;',class='form-control',placeholder='Link del Producto Aqui',value="#{dt.link!=null?dt.link:''}") 
+					if dt.link != null
+						a(href="#{dt.link}",target='_blank',style='background-color:white;color:blue;font-size:12px;') View
+			tr
+				td Stock:
+				td
+					div(class='input-group')
+						input#stock(type="number",value='#{dt.stock}',placeholder='000',style='width:50px;',class='form-control')
+						select#unidad_medida(class='form-control')
+					div(style='background-color:#B7FFA1;padding:3px;',class='input-group')
+						i(class="fa fa-info",style='padding:10px;color:#FF6C00;font-weight:bold;cursor:pointer;', aria-hidden="true",title='Es una herramienta para calcular el precio por unidad o medida de unidad seleccionada del monto total')
+						input(placeholder='Precio total',style='width:100px;', id='precio_total_tool',class='form-control',data-placement="Bottom")
+						button(onclick='set_precio_unitario()',class='form-control',style='cursor:pointer;') Calcular
+			tr
+				td Precio de Compra x <span class='unidad_medida'></span>:
+				td
+					input#precio_proveedor(type="text",value='#{dt.precio_proveedor}',placeholder='0.00',class='form-control')
+			tr
+				td Precio de Venta x <span class='unidad_medida'></span>:
+				td
+					input#precio(type="text",value='#{dt.precio}',placeholder='0.00',class='form-control')
+			tr
+				td Proveedor
+				td
+					div(class='input-group')
+						input#id_proveedor(type='text',style="width:40px;",disabled,value="#{dt.id_proveedor==undefined?'':dt.id_proveedor}")
+						input#providersList.awesomplete(value='')
+						button.awesomplete_btn(class='fa fa-angle-down',style='cursor:pointer;')
+						| &nbsp;&nbsp;&nbsp;&nbsp;
+						a(href="addProvider")
+							button(style='cursor:pointer;') 
+								i.fa.fa-user-plus(aria-hidden='true',style='color:#04BD04;',title='Añadir Nuevo Proveedor')
+					span
+						a(href='#{dt.link}',target='_blank',style='color:blue;') #{dt.razon_social!=null?dt.razon_social:''}
+			tr
+				td Numero Ubicación (Opcional)
+				td
+					input#nro_ref(type='text',style="width:160px;",placeholder='Codigo de Ubicación',value="#{dt.nro_ref==undefined?'':dt.nro_ref}")
+			tr
+				td Fecha de Registro:
+				td
+					- var f = new Date();
+					- var today = f.getFullYear()+"-"+("0" + (f.getMonth() + 1)).slice(-2) + "-" + f.getDate(); 
+					
+					div(class='input-group')
+						input#fecha(type="date",value='#{today}',placeholder='dia/mes/año',style='width:80%',class='')
+						button(onclick="$('#fecha').val( $l.getFechaStr(new Date()) );",style='width:20%',class='') hoy
+			tr
+				td(colspan='2',align='center')
+					br
+					if dt.id_producto == ""
+						button(onclick="saveProduct();",style='cursor:pointer;padding:10px;',class='btn btn-primary') Registrar a la Lista
+					else
+						button(onclick="updateProduct();",style='cursor:pointer;padding:10px;',class='btn btn-warning') Actualizar
+					| &nbsp;&nbsp;&nbsp;
+					button(onclick="window.history.back();",style='cursor:pointer;padding:10px;',class='btn btn-danger') Cancelar
+	br
+	br
+	br
+	br
+	br
+	br
+	br
+	br
+	br
+	br
+	br
+	link(rel="stylesheet", href="lib/calculadora/resources/calculadora.css")
+	script(src="lib/calculadora/resources/calculadora.js")
+	script.
+		$(window).ready(function(){
+			$("#nombrep").focus();
+			$.post("/getUnidadMedida",{
+
+			},function(obj){
+				$(".unidad_medida").html(obj[0].name_um);
+				var dH = "";
+				for( i in obj ){
+					dH+="<option value='"+obj[i].id_unidad_medida+"'>"+obj[i].name_um+"</option>";
+				}
+				$("#unidad_medida").html(dH);
+				$("#unidad_medida").children("option[value='#{dt.id_unidad_medida}']").prop('selected',true);
+			},"json");	
+
+			$("#unidad_medida").change(function(){
+				//- console.log(this.options[this.selectedIndex].text);
+				$(".unidad_medida").html(this.options[this.selectedIndex].text);
+			});
+			$("#fecha").val( $l.getFechaStr(new Date()) );
+			//- Cargamos Lista de providers
+			getListProviders();
+		});
+		var listAll;
+		var listAll_cod;
+		function getListProviders(){
+			listAll = [];
+			listAll_cod = [];
+			$.post('/providerManager@getAll_1', {
+			
+			}, function(dt, textStatus, xhr) {
+				console.log(dt);
+				var input = document.getElementById("providersList");
+				comboplete = new Awesomplete(input,{
+					minChars: 0
+				});
+				for(i in dt){
+					listAll.push(dt[i].razon_social);
+					listAll_cod.push(dt[i].id_proveedor);
+				}
+				comboplete.list = listAll;
+				comboplete.autoFirst = true;
+				//- console.log(listAll_cod);
+				// $("#providersList").css('width','400px');
+				// console.log("entro");
+				//- $("#providersList").focus();
+
+				Awesomplete.$('.awesomplete_btn').addEventListener("click", function() {
+					if (comboplete.ul.childNodes.length === 0) {
+						comboplete.minChars = 0;
+						comboplete.evaluate();
+					}
+					else if (comboplete.ul.hasAttribute('hidden')) {
+						comboplete.open();
+					}
+					else {
+						comboplete.close();
+					}
+				});
+			},"json");
+		}
+		function awesomplete_select() {
+		    var item = $("#providersList").val();
+		    var exist = false;
+		    var idp = 0;
+		    for (i in listAll) {
+		        if (listAll[i] == item) {
+		            exist = true;
+		            idp = listAll_cod[i];
+
+		        }
+		    }
+		    //- console.log("entro!!");
+		    //- window.location.href='admin_patientRecord?idp='+idp;
+		    //- console.log(idp);
+		    $("#id_proveedor").val(idp);
+		}
+		function set_precio_unitario(){
+			var precioTotal = parseFloat($("#precio_total_tool").val());
+			var cant = $("#stock").val();
+			var costeXunidad = (precioTotal/cant).toFixed(2);
+			$("#precio_proveedor").val(costeXunidad);
+		}
+		function saveProduct(){
+			//- alert($("#unidad_medida").val());
+
+			if( $("#nombrep").val() == "" ){
+				$("#nombrep").css('background-color','#FFBBBB').focus();
+				//- alert("Precio de compra Vacio");
+				return;
+			}else{
+				$("#nombrep").css('background-color','');
+			}
+			if( $("#stock").val() == "" ){
+				$("#stock").css('background-color','#FFBBBB').focus();
+				//- alert("Precio de compra Vacio");
+				return;
+			}else{
+				$("#stock").css('background-color','');
+			}
+			if( $("#precio_proveedor").val() == "" ){
+				$("#precio_proveedor").css('background-color','#FFBBBB').focus();
+				//- alert("Precio de venta Vacio");
+				return;
+			}else{
+				$("#precio_proveedor").css('background-color','');
+			}
+			if( $("#precio").val() == "" ){
+				$("#precio").css('background-color','#FFBBBB').focus();
+				//- alert("Precio de compra Vacio");
+				return;
+			}else{
+				$("#precio").css('background-color','');
+			}
+			
+
+			$.post("/saveProduct",{
+				nombrep: $("#nombrep").val()
+				,description: $("#description").val()
+				,stock: $("#stock").val()
+				,precio: $("#precio").val()
+				,precio_proveedor: $("#precio_proveedor").val()
+				,id_unidad_medida: $("#unidad_medida").val()
+				,fecha: $("#fecha").val()
+				,id_proveedor: $("#id_proveedor").val()
+				,nro_ref: $("#nro_ref").val()
+				,link: $("#link").val()
+			},function(obj){
+				console.log(obj);
+				$.toast({
+				    heading: 'Se esta procesando Solicitud, porfavor espere', // Optional heading to be shown on the toast
+				    
+				    showHideTransition: 'fade', // fade, slide or plain
+				    allowToastClose: true, // Boolean value true or false
+				    hideAfter: 3000, // false to make it sticky or number representing the miliseconds as time after which toast needs to be hidden
+				    stack: 5, // false if there should be only one toast at a time or a number representing the maximum number of toasts to be shown at a time
+				    position: 'bottom-center', // bottom-left or bottom-right or bottom-center or top-left or top-right or top-center or mid-center or an object representing the left, right, top, bottom values
+				    bgColor: '#1a6400',  // Background color of the toast
+				    textColor: '#eeeeee',  // Text color of the toast
+				    textAlign: 'left',  // Text alignment i.e. left, right or center
+				    loader: true,  // Whether to show loader or not. True by default
+				    loaderBg: '#9ec600',  // Background color of the toast loader
+				});
+				//- alert(obj.msn);
+				//- return;
+				window.location.href='?option=viewp';
+			},"json");
+		}
+		function updateProduct(){
+			var id_producto = $("#id_producto").val();
+			$.post("/updateProduct",{
+				id_producto: id_producto
+				,nombrep: $("#nombrep").val()
+				,description: $("#description").val()
+				,stock: $("#stock").val()
+				,precio: $("#precio").val()
+				,precio_proveedor: $("#precio_proveedor").val()
+				,id_unidad_medida: $("#unidad_medida").val()
+				,fecha: $("#fecha").val()
+				,id_proveedor: $("#id_proveedor").val()
+				,nro_ref: $("#nro_ref").val()
+				,link: $("#link").val()
+			},function(obj){
+				//- alert(obj.msn);
+				$.toast({
+				    heading: 'Se esta procesando Solicitud, porfavor espere', // Optional heading to be shown on the toast
+				    
+				    showHideTransition: 'fade', // fade, slide or plain
+				    allowToastClose: true, // Boolean value true or false
+				    hideAfter: 3000, // false to make it sticky or number representing the miliseconds as time after which toast needs to be hidden
+				    stack: 5, // false if there should be only one toast at a time or a number representing the maximum number of toasts to be shown at a time
+				    position: 'bottom-center', // bottom-left or bottom-right or bottom-center or top-left or top-right or top-center or mid-center or an object representing the left, right, top, bottom values
+				    bgColor: '#1a6400',  // Background color of the toast
+				    textColor: '#eeeeee',  // Text color of the toast
+				    textAlign: 'left',  // Text alignment i.e. left, right or center
+				    loader: true,  // Whether to show loader or not. True by default
+				    loaderBg: '#9ec600',  // Background color of the toast loader
+				});
+				window.location.href='?option=viewp&idp='+id_producto;
+			},"json");
+		}
+	script.
+		$(function () {
+		    $('#precio_total_tool').popover({
+			  trigger: 'click'
+			  ,html: true
+			  ,content: "<div class='calculadora' form='' action='#' name='calculadora' id='calculadora'>"
+					+"		<br>"
+					+"		<p id='textoPantalla'>0</p>"
+					+"		<p>"
+					+"		<input type='button' class='largo' value='Retr' onclick='retro()'>"
+					+"		<input type='button' class='largo' value='CE' onclick='borradoParcial()'>"
+					+"		<input type='button' class='largo' value='C' onclick='borradoTotal()'>"
+					+"		</p>"
+					+"		<p>"
+					+"		<input type='button' value='7' onclick='numero(7)'>"
+					+"		<input type='button' value='8' onclick='numero(&#39;8&#39;)'>"
+					+"		<input type='button' value='9' onclick='numero(&#39;9&#39;)'>"
+					+"		<input type='button' value='/' onclick='operar(&#39;/&#39;)'>"
+					+"		<input type='button' value='Raiz' onclick='raizc()'>"
+					+"		</p>"
+					+"		<p>"
+					+"		<input type='button' value='4' onclick='numero(&#39;4&#39;)'>"
+					+"		<input type='button' value='5' onclick='numero(&#39;5&#39;)'>"
+					+"		<input type='button' value='6' onclick='numero(&#39;6&#39;)'>"
+					+"		<input type='button' value='*' onclick='operar(&#39;*&#39;)'>"
+					+"		<input type='button' value='%' onclick='porcent()'>"
+					+"		</p>"
+					+"		<p>"
+					+"		<input type='button' value='1' onclick='numero(&#39;1&#39;)'>"
+					+"		<input type='button' value='2' onclick='numero(&#39;2&#39;)'>"
+					+"		<input type='button' value='3' onclick='numero(&#39;3&#39;)'>"
+					+"		<input type='button' value='-' onclick='operar(&#39;-&#39;)'>"
+					+"		<input type='button' value='1/x' onclick='inve()'>"
+					+"		</p>"
+					+"		<p>"
+					+"		<input type='button' value='0' onclick='numero(&#39;0&#39;)'>"
+					+"		<input type='button' value='+/-' onclick='opuest()'>"
+					+"		<input type='button' value='.' onclick='numero(&#39;.&#39;)'>"
+					+"		<input type='button' value='+' onclick='operar(&#39;+&#39;)'>"
+					+"		<input type='button' value='=' onclick='igualar()'>"
+					+"		</p>"
+					+"		<p>"
+					+"			<button class='btn btn-primary' style='cursor: pointer;' title='Pasar Resultado a Precio Total' onclick=\"moveResult();set_precio_unitario();$('#precio').focus();\">Establecer</button>"
+					+"			<button class='btn btn-danger' style='cursor: pointer;' title='Cerrar Calculadora' onclick='$(\"#precio_total_tool\").popover(\"hide\");'>X</button>"
+					+"		</p>"
+					+"	</div>"
+					+"<script>"
+					+"pantalla=document.getElementById('textoPantalla');"
+					+"document.onkeydown = teclado;" 
+					+"x='0'; //número en pantalla"
+					+"xi=1; //iniciar número en pantalla: 1=si; 0=no;"
+					+"coma=0; //estado coma decimal 0=no, 1=si;"
+					+"ni=0; //número oculto o en espera."
+					+"op='no'; //operación en curso; 'no' =  sin operación."
+					+""
+			});
+		});	
+		function moveResult(){
+			$("#precio_total_tool").val( $("#textoPantalla").text() );
+			$('#precio_total_tool').popover('hide');
+		}

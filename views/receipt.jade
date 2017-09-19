@@ -1,0 +1,152 @@
+extends ./layout/receipt
+
+block searchReceipt
+	div Buscador 
+		input(type="text",id="idv",placeholder='Introduce numero de Recibo')
+		button(onclick='searchReceipt()') Buscar
+	script.
+		function searchReceipt(){
+			var id_venta = $("#idv").val();
+			window.location.href='?idv='+id_venta;
+		}
+
+block viewReceiptaftersale
+	style.
+		.borderless td, .borderless th {
+			border: none;
+		}
+	if !cl
+		br
+		div(align='center')#msnRsta
+	br
+	div(align='center')#receiptBase
+		img(src='ico/searchReceipt.png')
+
+	if cl
+		- var bgcolor = "#FFE5E5";
+		- var display = 'none';
+	else
+		- var bgcolor = "#DEEEFE";
+		- var display = 'block';
+	script.
+		$(window).ready(function(){
+			//- console.log(#{idv});
+			if(#{idv} != undefined && #{idv}!=0 ){
+				$.post('/config@getHeaderReceipt', { //get CABECERA DE RECIBO
+						
+				}, function(dt, textStatus, xhr) {
+					//- console.log(dt);
+					receiptView(dt[0]);
+				});			
+			}
+				
+			
+		});
+		function receiptView(header){
+			console.log("ENTRO");
+			var bgcolor = "#{bgcolor}";
+			$.post('/receiptView',{ //c-saleManagement
+				id_venta: #{idv} 
+			},function(obj){
+			//- #ECECEC Rosado
+				if( !parseInt(#{idv}) )
+					$("#msnRsta").html("<span style='color:#939393;'>Realice la busqueda de documentos de una manera mas facil y rapida</span>");
+				else if( obj.length > 0 )
+					$("#msnRsta").html("<span style='color:#4C9B34;'>Recibo <b>'N° #{idv}'</b> encontrado!</span>");
+				else
+					$("#msnRsta").html("<span style='color:#8B2C2C;'>Recibo no existe, revise bien el numero del recibo</span>");
+				var objcl = obj[0];
+				var dh="<button onclick=\"$l.popup('/receipt?idv=#{idv}&cl=ok','Recibo - cliente',700,650)\" style='display:#{display};'>Preparar impresión</button>"
+				+"<table border='1' cellspacing='' class='borderless' width='500' id='receipt-table' style='margin:auto;border-color:"+bgcolor+";background:"+bgcolor+";' >"
+					+"<tr>"
+						+"<td align='left'><b>N°: "+objcl.id_venta+"</b></td>"
+						+"<td align='right'>Fecha: "+objcl.fecha+", Hora: "+objcl.hora+"</td>"
+					+"</tr>"
+					+"<tr>"
+						+"<td colspan='2' align='left'>"
+							+"<h2>"+header.razon_social+"</h2>"
+							+"<hr>" 
+							+"<p>DE: "+header.propietario+"</p>"
+							+"<p>"+header.descripcion+"</p>"
+							+"<p>Cel: "+header.celular_arr+" &nbsp;&nbsp;&nbsp;"+header.privicia_distrito_region_pais+"</p>"
+							+"<p>Ofrece: "+header.servicios+"</p>"
+						+"</td>"
+					+"</tr>"
+					+"<tr>"
+						+"<td width='20%'>Señor(es): </td>"
+						+"<td><span style='text-decoration:;'>"+objcl.nombre_cl+"</span></td>"
+					+"</tr>"
+					+"<tr>"
+						+"<td>DNI: </td>"
+						+"<td><span style='text-decoration:;'>"+objcl.dni_cl+"</span></td>"
+					+"</tr>"
+					+"<tr>"
+						+"<td>Dirección: </td>"
+						+"<td><span style='text-decoration:;'>"+objcl.direccion_cl+"</span></td>"
+					+"</tr>"
+					+"<tr>"
+						+"<td colspan='2' id='productDetails'>Descripción de la venta<br><br><br><br><br><br> </td>"
+					+"</tr>"
+					+"<tr>"
+						+"<td colspan='2' align='right'>"
+							+"<br><br>"
+							+"____________________"
+						+"</td>"
+					+"</tr>"
+					+"<tr>"
+						+"<td colspan='2' align='right'>"
+							+"CANCELADO&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
+						+"</td>"
+					+"</tr>"
+				+"</table>";
+				$("#receiptBase").html(dh);
+				$("#receipt-table").css({'padding':'10px'});
+				$("#receipt-table td").css({'padding':'3px 6px'});
+				$("#receipt-table td p").css({'line-height':'8px'});
+				$("#productDetails").css({'padding':'4px'});
+				var total = 0;
+				var dh =""
+				+"<table border='1' cellspacing='0' style='border-color:#F3F3F3;' width='100%'>"
+					+"<tr>"
+						+"<th>Cant.</th>"
+						+"<th>Producto</th>"
+						+"<th>P.Unit.</th>"
+						+"<th>Total</th>"
+					+"</tr>";
+				var discount_percent;
+				for( i in obj ){
+					dh+=""
+					+"<tr>"
+						+"<td>"+obj[i].cant_v +" "+obj[i].name_um+"</td>"
+						+"<td>"+obj[i].nombrep_v+"</td>"
+						+"<td>"+header.divisa+parseFloat(obj[i].precio_v).toFixed(2)+"</td>"
+						+"<td>"+header.divisa+parseFloat(obj[i].subtotal_v).toFixed(2)+"</td>"
+					+"</tr>";
+					discount_percent = obj[i].discount_percent; 
+					total+=parseFloat(obj[i].subtotal_v);
+				}
+				var msn = "TOTAL";
+				if(discount_percent!= null && discount_percent > 0)
+					msn = "PRECIO REAL";
+
+				dh+="<tr>"
+						+"<th colspan='3' align='right'>"+msn+": </th>"
+						+"<th align='left'>"+header.divisa+total.toFixed(2)+"</th>"
+					+"</tr>";
+				if(discount_percent!= null && discount_percent > 0){
+					dh+="<tr>"
+						+"<th colspan='3' align='right'>DESCUENTO APLICADO: </th>"
+						+"<th align='left'>% "+obj[0].discount_percent+"</th>"
+					+"</tr>"
+					+"<tr>"
+						+"<th colspan='3' align='right'>TOTAL: </th>"
+						+"<th align='left'>"+header.divisa+obj[0].total+"</th>"
+					+"</tr>";
+				}
+				dh+="</table>";
+				$("#productDetails").html(dh);
+				
+				$("#productDetails table td").css({'padding':'2px'});
+			},"json");
+			
+		}

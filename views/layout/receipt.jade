@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+html(lang="en")
+head
+	meta(charset="UTF-8")
+	title Recibo
+	link(href="lib/bootstrap-4.0.0-alpha.6-dist/css/bootstrap.css", rel="stylesheet")
+	link(href="lib/font-awesome-4.7.0/css/font-awesome.min.css", rel="stylesheet")
+	script(src='js/jquery-1.9.1.js')
+	script(src='js/luitorc.js')
+	script(src='js/ini.js')
+body
+	if !cl
+		include ../template/head
+		br
+		div(align='center')
+			block searchReceipt
+	block viewReceiptaftersale
+	script(src="lib/bootstrap-4.0.0-alpha.6-dist/js/tether.min.js")
+	script(src="lib/bootstrap-4.0.0-alpha.6-dist/js/bootstrap.min.js")

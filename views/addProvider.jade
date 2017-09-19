@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+html(lang="en")
+head
+	meta(charset="UTF-8")
+	title Nuevo Proveedor
+	style.
+		#regisProduct-table td{
+			padding: 6px 4px
+		}
+			
+		
+		#regisProduct-table{
+			background-color:white;
+			border-color:#CECECE;
+		}
+	script(src="js/jquery-1.9.1.js")
+	script(src='js/ini.js')
+	script(src='js/luitorc.js')
+	link(href="lib/bootstrap-4.0.0-alpha.6-dist/css/bootstrap.css", rel="stylesheet")
+	link(href="lib/font-awesome-4.7.0/css/font-awesome.min.css", rel="stylesheet")
+	link(rel="stylesheet",href="lib/jquery-toast-plugin-master/src/jquery.toast.css")
+body
+	include template/head.jade
+	div(style='text-align:center;')
+		br
+		h3 #{title}
+		table(style='margin:auto;text-align:left;width:600px;box-shadow:3px 3px 10px #CFCFCF;',border='0',id='regisProduct-table',class='table')
+			tr(style='display:none;')
+				td Id
+				td 
+					input#id_proveedor(type="text",style='width:40px;',value='',disabled)
+			tr
+				td Razon Social:
+				td 
+					input#razon_social(type="text",value='',class='form-control',autofocus)
+			tr
+				td Descripción <span style='color:#868686;'>(Opcional)</span>:
+				td 
+					textarea#descripcion(type="text",style='font-size:12px;',class='form-control') 
+			tr
+				td Telefono 1:
+				td
+					input#telf(type="text",class='form-control')
+			tr
+				td Telefono 2:
+				td
+					input#telf2(type="text",class='form-control')
+			tr(style='display:none;')
+				td Telefono 3:
+				td
+					input#telf3(type="text",class='form-control')
+			tr
+				td Link:
+				td
+					input#link(type="text",value='',placeholder='ejem. www.proveedor/juan.perez.com',class='form-control')
+			tr
+				td Correo:
+				td
+					input#correo(type="text",value='',placeholder='ejemplo_1@hotmail.com',class='form-control')
+			tr
+				td Dirección:
+				td
+					input#direccion(type="text",value='',placeholder='Av. Ejemplo1 A-1',class='form-control')
+			tr
+				td Fecha de Registro:
+				td
+					- var f = new Date();
+					- var today = f.getFullYear()+"-"+("0" + (f.getMonth() + 1)).slice(-2) + "-" + f.getDate(); 
+					
+					div(class='input-group')
+						input#fech_regis(type="date",value='#{today}',placeholder='dia/mes/año',style='width:80%',class='')
+						button(onclick="$('#fech_regis').val( $l.getFechaStr(new Date()) );",style='width:20%',class='') hoy
+			tr
+				td(colspan='2',align='center')
+					br
+					button(onclick="providerManager_add();",style='cursor:pointer;padding:10px;',class='btn btn-primary') Registrar Proveedor
+					| &nbsp;&nbsp;&nbsp;
+					button(onclick="window.history.back();",style='cursor:pointer;padding:10px;',class='btn btn-danger') Cancelar Registro
+	script(src="lib/jquery-toast-plugin-master/src/jquery.toast.js")
+	script(src="lib/bootstrap-4.0.0-alpha.6-dist/js/tether.min.js")
+	script(src="lib/bootstrap-4.0.0-alpha.6-dist/js/bootstrap.min.js")
+	script.
+		$(window).ready(function(){
+			
+		});
+		var obj_form;
+		function providerManager_add(){
+			obj_form = {
+				id_proveedor: $("#id_proveedor")
+				,razon_social: $("#razon_social")
+				,telf: $("#telf")
+				,telf2: $("#telf2")
+				,telf3: $("#telf3")
+				,correo: $("#correo")
+				,direccion: $("#direccion")
+				,descripcion: $("#descripcion")
+				,fech_regis: $("#fech_regis")
+				,link: $("#link")
+			}
+			var obj_in = {};
+			for( i in obj_form ){
+				obj_in[i] = obj_form[i].val();
+			}
+			console.log(obj_in);
+			$.post('/providerManager@add',{
+				obj_in
+			},function(obj){
+				if(obj == "1")
+					window.history.back();
+				else
+					alert("Error Al registrar");
+			},"json");
+		}

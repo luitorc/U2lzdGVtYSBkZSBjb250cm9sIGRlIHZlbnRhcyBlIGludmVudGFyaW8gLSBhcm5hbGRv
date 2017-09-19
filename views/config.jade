@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+html(lang="en")
+	head
+		meta(charset="UTF-8")
+		meta(name="viewport", content="width=device-width, initial-scale=1")
+		title #{title}
+		//- link(rel="stylesheet", href="css/w3.css")
+		script(src='js/jquery-1.9.1.js')
+		script(src='js/ini.js')
+		script(src='js/luitorc.js')
+
+		link(href="lib/bootstrap-4.0.0-alpha.6-dist/css/bootstrap.css", rel="stylesheet")
+		link(href="lib/font-awesome-4.7.0/css/font-awesome.min.css", rel="stylesheet")
+		link(rel="stylesheet",href="lib/jquery-toast-plugin-master/src/jquery.toast.css")
+		script(src="lib/jquery-toast-plugin-master/src/jquery.toast.js")
+		script(src="lib/bootstrap-4.0.0-alpha.6-dist/js/tether.min.js")
+		script(src="lib/bootstrap-4.0.0-alpha.6-dist/js/bootstrap.min.js")
+		style.
+			.container{
+				margin:auto;
+			}
+			button{
+				cursor:pointer;
+			}
+			.receipt_tb input,textarea{
+				width:100%;
+			}
+			.receipt_tb{
+				width:400px;
+			}
+	body
+		include ./template/head.jade
+		br
+		div.container
+			table(border='1',style='width:400px;')
+				tr
+					th(colspan='2') Configuración de Divisas
+				tr
+					td Moneda
+					td
+						select#setDivisa()
+							option(value='S/.') S/. (Soles)
+							option(value='$ ') $ (USD)
+			br
+			table.receipt_tb(border='1')
+				tr
+					th(colspan='2') Datos del Recibo
+				tr
+					td Razon Social
+					td
+						input#razon_social
+				tr
+					td Propietario
+					td
+						input#propietario
+				tr
+					td Cod+Celular(s)
+					td
+						input#celular_arr
+				tr
+					td Descripción
+					td
+						textarea#descripcion
+				tr
+					td CIUDAD - PAIS
+					td
+						input#privicia_distrito_region_pais
+				tr
+					td Dirección
+					td
+						input#direccion
+				tr
+					td Servicios
+					td
+						textarea#servicios
+				tr
+					td(colspan='2',align='center')
+						button(onclick="setUpdateReceipt()") Actualizar Datos 
+		script.
+			$(window).ready(function(){
+				$.post('/config@allDataConfig', { //get CABECERA DE RECIBO
+					
+				}, function(dt, textStatus, xhr) {
+					//- console.log(dt);
+					$("#setDivisa").val(dt[0].divisa);
+					$("#razon_social").val(dt[0].razon_social);
+					$("#propietario").val(dt[0].propietario);
+					$("#celular_arr").val(dt[0].celular_arr);
+					$("#descripcion").val(dt[0].descripcion);
+					$("#direccion").val(dt[0].direccion);
+					$("#servicios").val(dt[0].servicios);
+					$("#privicia_distrito_region_pais").val(dt[0].privicia_distrito_region_pais);
+				});
+				
+				$("#setDivisa").change(function(){
+					console.log(this.value);
+					//- return;
+					$.post('/config@setTypeDivisa', {
+						setDivisa: $("#setDivisa").val()
+					}, function(confirm, textStatus, xhr) {
+						//- console.log(confirm);
+						if(confirm)
+							console.log("Cambio efectuado");
+					});
+
+				});
+			});
+			function setUpdateReceipt(){
+				$.post('/config@setDataReceipt', {
+					razon_social: $("#razon_social").val()
+					,propietario: $("#propietario").val()
+					,descripcion: $("#descripcion").val()
+					,celular_arr: $("#celular_arr").val()
+					,direccion: $("#direccion").val()
+					,servicios: $("#servicios").val()
+					,privicia_distrito_region_pais: $("#privicia_distrito_region_pais").val()
+				}, function(confirm, textStatus, xhr) {
+					//- console.log(confirm);
+					if(confirm){
+						console.log("Cambio efectuado");
+						window.location.reload();
+					}
+				});
+			}
+			
